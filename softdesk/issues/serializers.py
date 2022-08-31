@@ -17,8 +17,7 @@ class IssueListSerializer(ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ['title', 'desc', 'tag', 'priority', 'project_id', 'status',
-                  'author_user_id', 'assignee_user_id', 'created_time']
+        fields = ['title', 'desc', 'tag', 'priority', 'status', 'assignee_user_id']
 
     def validate_title(self, value):
         if Issue.objects.filter(title=value).exists():
@@ -74,5 +73,3 @@ class ProjectDetailSerializer(ModelSerializer):
         queryset = instance.issue.filter()
         serializer = IssueListSerializer(queryset, many=True)
         return serializer.data
-
-

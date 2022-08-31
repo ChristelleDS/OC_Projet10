@@ -45,7 +45,11 @@ class IssueViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
     detail_serializer_class = IssueDetailSerializer
 
     def get_queryset(self):
-        return Issue.objects.filter()
+        queryset = Issue.objects.filter()
+        project_id = self.request.GET.get('project_id')
+        if project_id is not None:
+            queryset = queryset.filter(project_id=project_id)
+        return queryset
 
 
 class AdminIssueViewset(MultipleSerializerMixin, ModelViewSet):
@@ -55,10 +59,18 @@ class AdminIssueViewset(MultipleSerializerMixin, ModelViewSet):
     queryset = Issue.objects.all()
 
 
-class CommentViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
-    serializer_class = IssueListSerializer
-    # Ajoutons un attribut de classe qui nous permet de définir notre serializer de détail
-    detail_serializer_class = CommentSerializer
+class CommentViewset(ReadOnlyModelViewSet):
+    serializer_class = CommentSerializer
 
     def get_queryset(self):
-        return Comment.objects.filter()
+        queryset = Comment.objects.filter()
+        issue_id = self.request.GET.get('issue_id')
+        if issue_id is not None:
+            queryset = queryset.filter(issue_id=issue_id)
+        return queryset
+
+
+class AdminCommentViewset(ModelViewSet):
+
+    serializer_class = CommentSerializer
+    queryset = Comment.objects.all()

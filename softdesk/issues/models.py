@@ -54,6 +54,12 @@ class Issue(models.Model):
     assignee_user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_time = models.fields.DateTimeField(default=timezone.now)
 
+    def save(self, *args, **kwargs):
+        if self.author_user_id is None:
+            self.author_user_id = User.id
+        if self.assignee_user_id is None:
+            self.assignee_user_id = User.id
+        super().save(*args, **kwargs)
 
 class Comment(models.Model):
     comment_id = models.fields.IntegerField()
