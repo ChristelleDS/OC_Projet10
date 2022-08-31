@@ -10,11 +10,18 @@ def get_sentinel_user():
     return get_user_model().objects.get_or_create(username='deleted')[0]
 
 class Project(models.Model):
+
+    TYPE_CHOICES = [
+        ('Web', 'Web'),
+        ('iOS', 'iOS'),
+        ('And', 'Android'),
+    ]
+
     project_id = models.fields.IntegerField()
     title = models.fields.CharField(max_length=128)
     description = models.fields.CharField(max_length=500)
-    type = models.fields.CharField(max_length=30)
-    author_user_id = models.ForeignKey(settings.AUTH_USER_MODEL,
+    type = models.CharField(choices=TYPE_CHOICES, max_length=7)
+    author_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL,
                                        on_delete=models.SET(get_sentinel_user))
 
     def save(self, *args, **kwargs):
@@ -25,15 +32,22 @@ class Project(models.Model):
 
 class Contributor(models.Model):
 
-    class Role(models.Choices):
-        Author = 0
-        Responsible = 1
-        Creator = 2
+    ROLE_CHOICES = [
+        ('RES', 'Responsable'),
+        ('AUT', 'Auteur'),
+        ('CON', 'Contributeur'),
+    ]
 
-    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    PERM_LIST = [
+        ("restricted", "Contributeur"),
+        ("all", "Auteur"),
+    ]
+
+
+    user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project_id = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='contributors')
-    permission = models.fields.CharField(max_length=20)
-    role = models.fields.CharField(choices=Role.choices,max_length=12)
+    permission = models.CharField(max_length=50, choices=PERM_LIST, default='restricted')
+    role = models.fields.CharField(choices=ROLE_CHOICES,max_length=12, default="")
 
 
 class Issue(models.Model):
@@ -43,15 +57,25 @@ class Issue(models.Model):
         Task = 1
         Improvement = 2
 
+    PRIORITY = [('L', 'Low'),
+                ('M', 'Medium'),
+                ('H', 'High')
+                ]
+
+    STATUS = [('OP', 'OPEN'),
+        ('IP', 'IN PROGRESS'),
+        ('CL', 'Closed')
+        ]
+
     issue_id = models.fields.IntegerField()
     title = models.fields.CharField(max_length=128)
     desc = models.fields.CharField(max_length=700, blank=True)
     tag = models.fields.CharField(choices=Tag.choices, max_length=12)
-    priority = models.fields.CharField(max_length=20)
+    priority = models.fields.CharField(max_length=20, choices=PRIORITY, default='L')
     project_id = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='issues')
-    status = models.fields.CharField(max_length=20)
-    author_user_id = models.ForeignKey(Contributor, on_delete=models.CASCADE)
-    assignee_user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    status = models.fields.CharField(max_length=20, choices=STATUS, default='Ouvert')
+    author_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    assignee_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assignee')
     created_time = models.fields.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
@@ -64,6 +88,6 @@ class Issue(models.Model):
 class Comment(models.Model):
     comment_id = models.fields.IntegerField()
     description = models.fields.CharField(max_length=500)
-    author_user_id = models.ForeignKey(Contributor, on_delete=models.CASCADE)
+    author_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     issue_id = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='comments')
     created_time = models.fields.DateTimeField(default=timezone.now)

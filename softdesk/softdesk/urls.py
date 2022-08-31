@@ -11,7 +11,7 @@ router = routers.SimpleRouter()
 # afin que l’url générée soit celle que nous souhaitons ‘/api/category/’
 router.register('projects', views.ProjectViewset, basename='projects')
 router.register('admin/projects', views.AdminProjectViewset, basename='admin-products')
-router.register('projects/<int:project_id>/issues', views.IssueViewset, basename='issues')
+router.register('issues', views.IssueViewset, basename='issues')
 router.register('admin/issues', views.AdminIssueViewset, basename='admin-issues')
 router.register('projects/<int:project_id>/issues/<int:issue_id>/comments', views.CommentViewset, basename='comments')
 router.register('admin/comments', views.AdminCommentViewset, basename='admin-comments')

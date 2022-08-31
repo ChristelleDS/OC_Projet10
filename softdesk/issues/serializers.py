@@ -1,9 +1,12 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
+from django.contrib.auth.models import User
 from rest_framework.serializers import ModelSerializer, ValidationError
-
 from .models import Project, Contributor, Issue, Comment
+from django.contrib.auth import get_user_model
 
+
+User = get_user_model()
 
 
 class CommentSerializer(ModelSerializer):
@@ -17,7 +20,7 @@ class IssueListSerializer(ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ['title', 'desc', 'tag', 'priority', 'status', 'assignee_user_id']
+        fields = "__all__"
 
     def validate_title(self, value):
         if Issue.objects.filter(title=value).exists():
@@ -73,3 +76,18 @@ class ProjectDetailSerializer(ModelSerializer):
         queryset = instance.issue.filter()
         serializer = IssueListSerializer(queryset, many=True)
         return serializer.data
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'password', 'email']
+
+    def create(self, validated_data):
+        return User.objects.create_user(
+            validated_data["username"],
+            password=validated_data["password"],
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
+            email=validated_data["email"],
+        )
