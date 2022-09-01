@@ -22,8 +22,7 @@ class Project(models.Model):
     title = models.fields.CharField(max_length=128)
     description = models.fields.CharField(max_length=500)
     type = models.CharField(choices=TYPE_CHOICES, max_length=7)
-    author_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL,
-                                       on_delete=models.SET(get_sentinel_user))
+    author_user_id =  models.ManyToManyField('Contributor', related_name='projects')
 
     def save(self, *args, **kwargs):
         if self.author_user_id is None:
