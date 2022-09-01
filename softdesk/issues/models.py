@@ -33,9 +33,9 @@ class Project(models.Model):
 class Contributor(models.Model):
 
     ROLE_CHOICES = [
-        ('RES', 'Responsable'),
-        ('AUT', 'Auteur'),
-        ('CON', 'Contributeur'),
+        ('RESP', 'Responsable'),
+        ('AUTH', 'Auteur'),
+        ('CONT', 'Contributeur'),
     ]
 
     PERM_LIST = [
