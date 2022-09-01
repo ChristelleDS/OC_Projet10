@@ -12,7 +12,8 @@ def get_sentinel_user():
 class Project(models.Model):
 
     TYPE_CHOICES = [
-        ('Web', 'Web'),
+        ('Back', 'Backend'),
+        ('Front', 'Frontend'),
         ('iOS', 'iOS'),
         ('And', 'Android'),
     ]
