@@ -27,6 +27,7 @@ class Project(models.Model):
     def save(self, *args, **kwargs):
         if self.author_user_id is None:
             self.author_user_id = User.id
+            Contributor.objects.create(user_id=User.id, project_id=self.project_id, permission='all', role='AUTH')
         super().save(*args, **kwargs)
 
 
@@ -42,7 +43,6 @@ class Contributor(models.Model):
         ("restricted", "Contributeur"),
         ("all", "Auteur"),
     ]
-
 
     user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project_id = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='contributors')

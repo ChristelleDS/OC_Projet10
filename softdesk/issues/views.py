@@ -2,9 +2,9 @@ from django.shortcuts import render
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .models import Project, Issue, Comment
+from .models import Project, Issue, Comment, Contributor
 from .serializers import ProjectListSerializer, ProjectDetailSerializer, \
-    IssueListSerializer, IssueDetailSerializer, CommentSerializer
+    IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer
 
 
 class MultipleSerializerMixin:
@@ -65,3 +65,18 @@ class AdminCommentViewset(ModelViewSet):
 
     serializer_class = CommentSerializer
     queryset = Comment.objects.all()
+
+class ContributorViewset(ReadOnlyModelViewSet):
+    serializer_class = ContributorSerializer
+
+    def get_queryset(self):
+        queryset = Contributor.objects.filter()
+        project_id = self.request.GET.get('project_id')
+        if project_id is not None:
+            queryset = queryset.filter(project_id=project_id)
+        return queryset
+
+
+class AdminContributorViewset(ModelViewSet):
+    serializer_class = ContributorSerializer
+    queryset = Contributor.objects.all()
