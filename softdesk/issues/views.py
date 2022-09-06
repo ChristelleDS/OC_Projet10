@@ -1,7 +1,11 @@
 from rest_framework import generics
 from .models import Project, Issue, Comment, Contributor
-from .serializers import ProjectListSerializer, ProjectDetailSerializer, \
+from .serializers import ProjectListSerializer, ProjectDetailSerializer, UserSerializer, \
     IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
 
 
 class ProjectViewset(generics.ListCreateAPIView):
@@ -64,5 +68,5 @@ class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ContributorSerializer
 
 class UserViewset(generics.ListCreateAPIView):
-    queryset = Contributor.objects.all()
-    serializer_class = ContributorSerializer
+    queryset = User.objects.all()
+    serializer_class = UserSerializer

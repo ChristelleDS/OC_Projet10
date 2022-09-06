@@ -4,14 +4,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from issues.views import ProjectViewset, ProjectDetailViewset, \
                         IssueViewset, IssueDetailViewset,\
                         ContributorViewset, ContributorDetailViewset, \
-                        CommentViewset, CommentDetailViewset
+                        CommentViewset, CommentDetailViewset, UserViewset
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls')),
-    # path('api/signup/', ),
-    # path('api/login/', ),
+    path('api-auth/login/', include('rest_framework.urls')),
+    path('api/signup/', UserViewset.as_view(), name='signup'),
     path('api/projects/', ProjectViewset.as_view(), name='project_cl'),
     path('api/projects/<int:pk>/', ProjectDetailViewset.as_view(), name='project_rud'),
     path('api/projects/<int:project_id>/users/', ContributorViewset.as_view(), name='contrib_cl'),
