@@ -1,6 +1,3 @@
-from rest_framework import serializers
-from rest_framework.fields import SerializerMethodField
-from django.contrib.auth.models import User
 from rest_framework.serializers import ModelSerializer, ValidationError
 from .models import Project, Contributor, Issue, Comment
 from django.contrib.auth import get_user_model
@@ -13,7 +10,7 @@ class CommentSerializer(ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['comment_id', 'description', 'author_user_id', 'issue_id', 'created_time']
+        fields = '__all__'
 
 
 class IssueListSerializer(ModelSerializer):
@@ -45,18 +42,17 @@ class ContributorSerializer(ModelSerializer):
 
     class Meta:
         model = Contributor
-        fields = ['user_id', 'project_id', 'permission', 'role']
+        fields = '__all__'
 
 
 class ProjectListSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['project_id', 'title', 'description', 'type', 'author_user_id']
+        fields = '__all__'
 
     def validate_title(self, value):
         if Project.objects.filter(title=value).exists():
-        # En cas d'erreur, DRF nous met à disposition l'exception ValidationError
             raise ValidationError('Project already exists')
         return value
 
@@ -65,7 +61,7 @@ class ProjectDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['project_id', 'title', 'description', 'type', 'author_user_id', 'contributors', 'issues']
+        fields = ['id', 'title', 'description', 'type', 'author', 'contributors', 'issues']
 
     def get_contributors(self, instance):
         queryset = instance.contributor.filter()
@@ -77,17 +73,9 @@ class ProjectDetailSerializer(ModelSerializer):
         serializer = IssueListSerializer(queryset, many=True)
         return serializer.data
 
-class UserSerializer(serializers.ModelSerializer):
+
+class UserSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'password', 'email']
-
-    def create(self, validated_data):
-        return User.objects.create_user(
-            validated_data["username"],
-            password=validated_data["password"],
-            first_name=validated_data["first_name"],
-            last_name=validated_data["last_name"],
-            email=validated_data["email"],
-        )
+        fields = ['username', 'first_name', 'last_name', 'password', 'email']

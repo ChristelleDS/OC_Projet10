@@ -1,34 +1,38 @@
-from django.db import models
-from django.conf import settings
+from django.db import models, transaction
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 
 
 User = get_user_model()
 
-def get_sentinel_user():
-    return get_user_model().objects.get_or_create(username='deleted')[0]
 
 class Project(models.Model):
 
     TYPE_CHOICES = [
-        ('Back', 'Backend'),
-        ('Front', 'Frontend'),
+        ('Backend', 'Back'),
+        ('Frontend', 'Front'),
         ('iOS', 'iOS'),
-        ('And', 'Android'),
+        ('Android', 'And'),
     ]
 
-    project_id = models.fields.IntegerField()
     title = models.fields.CharField(max_length=128)
     description = models.fields.CharField(max_length=500)
-    type = models.CharField(choices=TYPE_CHOICES, max_length=7)
-    author_user_id =  models.ManyToManyField('Contributor', related_name='projects')
+    type = models.CharField(choices=TYPE_CHOICES, max_length=8)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    contrib_users = models.ManyToManyField(User, related_name='projects', through='Contributor', blank=True)
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
-        if self.author_user_id is None:
-            self.author_user_id = User.id
-            Contributor.objects.create(user_id=User.id, project_id=self.project_id, permission='all', role='AUTH')
-        super().save(*args, **kwargs)
+        self.save(*args, **kwargs)
+        contrib = Contributor.objects.create(
+            user=self.author,
+            project=self.id,
+            permission='all',
+            role='AUTH'
+            )
+        contrib.save()
+        self.contrib_users.add(contrib)
+        self.save(*args, **kwargs)
 
 
 class Contributor(models.Model):
@@ -36,7 +40,7 @@ class Contributor(models.Model):
     ROLE_CHOICES = [
         ('RESP', 'Responsable'),
         ('AUTH', 'Auteur'),
-        ('CONT', 'Contributeur'),
+        ('CRE', 'Créateur'),
     ]
 
     PERM_LIST = [
@@ -44,10 +48,13 @@ class Contributor(models.Model):
         ("all", "Auteur"),
     ]
 
-    user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    project_id = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='contributors')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='contributors')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='contributors')
     permission = models.CharField(max_length=50, choices=PERM_LIST, default='restricted')
-    role = models.fields.CharField(choices=ROLE_CHOICES,max_length=12, default="")
+    role = models.fields.CharField(choices=ROLE_CHOICES, max_length=12, default="")
+
+    class Meta:
+        unique_together = ('user', 'project')
 
 
 class Issue(models.Model):
@@ -63,19 +70,18 @@ class Issue(models.Model):
                 ]
 
     STATUS = [('OP', 'OPEN'),
-        ('IP', 'IN PROGRESS'),
-        ('CL', 'Closed')
-        ]
+              ('IP', 'IN PROGRESS'),
+              ('CL', 'Closed')
+              ]
 
-    issue_id = models.fields.IntegerField()
     title = models.fields.CharField(max_length=128)
     desc = models.fields.CharField(max_length=700, blank=True)
     tag = models.fields.CharField(choices=Tag.choices, max_length=12)
     priority = models.fields.CharField(max_length=20, choices=PRIORITY, default='L')
     project_id = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='issues')
     status = models.fields.CharField(max_length=20, choices=STATUS, default='Ouvert')
-    author_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    assignee_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assignee')
+    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    assignee_user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assignee')
     created_time = models.fields.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
@@ -85,9 +91,14 @@ class Issue(models.Model):
             self.assignee_user_id = User.id
         super().save(*args, **kwargs)
 
+
 class Comment(models.Model):
-    comment_id = models.fields.IntegerField()
     description = models.fields.CharField(max_length=500)
-    author_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
     issue_id = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='comments')
     created_time = models.fields.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        if self.author_user_id is None:
+            self.author_user_id = User.id
+        super().save(*args, **kwargs)

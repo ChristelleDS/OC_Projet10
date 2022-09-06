@@ -1,39 +1,23 @@
-from django.shortcuts import render
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework import generics
 from .models import Project, Issue, Comment, Contributor
 from .serializers import ProjectListSerializer, ProjectDetailSerializer, \
     IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer
 
 
-class MultipleSerializerMixin:
-    detail_serializer_class = None
-
-    def get_serializer_class(self):
-        if self.action == 'retrieve' and self.detail_serializer_class is not None:
-            return self.detail_serializer_class
-        return super().get_serializer_class()
-
-
-class ProjectViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
+class ProjectViewset(generics.ListCreateAPIView):
     serializer_class = ProjectListSerializer
-    detail_serializer_class = ProjectDetailSerializer
 
     def get_queryset(self):
         return Project.objects.filter()
 
 
-class AdminProjectViewset(MultipleSerializerMixin, ModelViewSet):
-
-    serializer_class = ProjectListSerializer
-    detail_serializer_class = ProjectDetailSerializer
+class ProjectDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Project.objects.all()
+    serializer_class = ProjectDetailSerializer
 
 
-class IssueViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
+class IssueViewset(generics.ListCreateAPIView):
     serializer_class = IssueListSerializer
-    detail_serializer_class = IssueDetailSerializer
 
     def get_queryset(self):
         queryset = Issue.objects.filter()
@@ -43,14 +27,12 @@ class IssueViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
         return queryset
 
 
-class AdminIssueViewset(MultipleSerializerMixin, ModelViewSet):
-
-    serializer_class = IssueListSerializer
-    detail_serializer_class = IssueDetailSerializer
+class IssueDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Issue.objects.all()
+    serializer_class = IssueDetailSerializer
 
 
-class CommentViewset(ReadOnlyModelViewSet):
+class CommentViewset(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
 
     def get_queryset(self):
@@ -61,12 +43,12 @@ class CommentViewset(ReadOnlyModelViewSet):
         return queryset
 
 
-class AdminCommentViewset(ModelViewSet):
-
-    serializer_class = CommentSerializer
+class CommentDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
 
-class ContributorViewset(ReadOnlyModelViewSet):
+
+class ContributorViewset(generics.ListCreateAPIView):
     serializer_class = ContributorSerializer
 
     def get_queryset(self):
@@ -77,6 +59,10 @@ class ContributorViewset(ReadOnlyModelViewSet):
         return queryset
 
 
-class AdminContributorViewset(ModelViewSet):
-    serializer_class = ContributorSerializer
+class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Contributor.objects.all()
+    serializer_class = ContributorSerializer
+
+class UserViewset(generics.ListCreateAPIView):
+    queryset = Contributor.objects.all()
+    serializer_class = ContributorSerializer
