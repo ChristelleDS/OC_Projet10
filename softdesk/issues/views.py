@@ -5,6 +5,7 @@ from .serializers import ProjectListSerializer, ProjectDetailSerializer, UserSer
 from django.contrib.auth import get_user_model
 from rest_framework import permissions
 from .permissions import IsOwnerOrReadOnly
+from django.db import transaction
 
 
 User = get_user_model()
@@ -15,7 +16,26 @@ class ProjectViewset(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
+        """
+        projects = [
+            contributors.project.id
+            for contributors in Contributor.objects.filter(user=self.request.user)
+        ]
+        return Project.objects.filter(id__in=projects)
+        """
         return Project.objects.filter()
+
+    def save(self, *args, **kwargs):
+        self.save(*args, **kwargs)
+        contrib = Contributor.objects.create(
+            user= self.request.user.id,
+            project=self.pk,
+            permission='all',
+            role='AUTH'
+        )
+        contrib.save()
+        self.contrib_users.add(contrib)
+        self.save(*args, **kwargs)
 
 
 class ProjectDetailViewset(generics.RetrieveUpdateDestroyAPIView):
@@ -36,6 +56,12 @@ class IssueViewset(generics.ListCreateAPIView):
             queryset = queryset.filter(project_id=project_id)
         return queryset
 
+    def save(self, *args, **kwargs):
+        if self.author_user_id is None:
+            self.author_user_id = self.request.user.id
+        if self.assignee_user_id is None:
+            self.assignee_user_id = self.request.user.id
+        super().save(*args, **kwargs)
 
 class IssueDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Issue.objects.all()

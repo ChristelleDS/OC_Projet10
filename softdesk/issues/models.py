@@ -18,21 +18,7 @@ class Project(models.Model):
     title = models.fields.CharField(max_length=128)
     description = models.fields.CharField(max_length=500)
     type = models.CharField(choices=TYPE_CHOICES, max_length=8)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
     contrib_users = models.ManyToManyField(User, related_name='projects', through='Contributor', blank=True)
-
-    @transaction.atomic
-    def save(self, *args, **kwargs):
-        self.save(*args, **kwargs)
-        contrib = Contributor.objects.create(
-            user=self.author,
-            project=self.id,
-            permission='all',
-            role='AUTH'
-            )
-        contrib.save()
-        self.contrib_users.add(contrib)
-        self.save(*args, **kwargs)
 
 
 class Contributor(models.Model):
@@ -80,16 +66,9 @@ class Issue(models.Model):
     priority = models.fields.CharField(max_length=20, choices=PRIORITY, default='L')
     project_id = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='issues')
     status = models.fields.CharField(max_length=20, choices=STATUS, default='Ouvert')
-    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    assignee_user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assignee')
+    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
+    assignee_user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assignee', blank=True)
     created_time = models.fields.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        if self.author_user_id is None:
-            self.author_user_id = User.id
-        if self.assignee_user_id is None:
-            self.assignee_user_id = User.id
-        super().save(*args, **kwargs)
 
 
 class Comment(models.Model):
