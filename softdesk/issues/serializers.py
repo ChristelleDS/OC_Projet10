@@ -61,7 +61,7 @@ class ProjectDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'title', 'description', 'type', 'author', 'contributors', 'issues']
+        fields = ['id', 'title', 'description', 'type', 'contributors', 'issues']
 
     def get_contributors(self, instance):
         queryset = instance.contributor.filter()
