@@ -18,6 +18,7 @@ class Project(models.Model):
     title = models.fields.CharField(max_length=128)
     description = models.fields.CharField(max_length=500)
     type = models.CharField(choices=TYPE_CHOICES, max_length=8)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
     contrib_users = models.ManyToManyField(User, related_name='projects', through='Contributor', blank=True)
 
 
