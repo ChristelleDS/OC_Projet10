@@ -4,7 +4,7 @@ from .serializers import ProjectListSerializer, ProjectDetailSerializer, UserSer
     IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import permissions
-from .permissions import IsOwnerOrReadOnly
+from .permissions import IsAuthorOrReadOnly
 
 
 User = get_user_model()
@@ -25,22 +25,19 @@ class ProjectViewset(generics.ListCreateAPIView):
         return Project.objects.filter()
 
     def perform_create(self, serializer):
-        instance = serializer.save(author=self.request.user)
-        contrib = Contributor.objects.create(
-            user= self.request.user,
-            project=instance,
+        project = serializer.save(author=self.request.user)
+        contributor = Contributor.objects.create(
+            user=project.author,
+            project=project,
             permission='all',
             role='AUTH'
         )
-        instance.contrib_users.add(self.request.user)
-        instance.save()
 
 
 class ProjectDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectDetailSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
 
 class IssueViewset(generics.ListCreateAPIView):
@@ -65,8 +62,7 @@ class IssueViewset(generics.ListCreateAPIView):
 class IssueDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Issue.objects.all()
     serializer_class = IssueDetailSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
 
 class CommentViewset(generics.ListCreateAPIView):
@@ -84,8 +80,7 @@ class CommentViewset(generics.ListCreateAPIView):
 class CommentDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
 
 class ContributorViewset(generics.ListCreateAPIView):
@@ -103,8 +98,7 @@ class ContributorViewset(generics.ListCreateAPIView):
 class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Contributor.objects.all()
     serializer_class = ContributorSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
 class UserViewset(generics.ListCreateAPIView):
     queryset = User.objects.all()

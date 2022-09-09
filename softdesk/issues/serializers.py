@@ -1,6 +1,7 @@
 from rest_framework.serializers import ModelSerializer, ValidationError
 from .models import Project, Contributor, Issue, Comment
 from django.contrib.auth import get_user_model
+from django.db import models
 
 
 User = get_user_model()
@@ -49,7 +50,7 @@ class ProjectListSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields = '__all__'
+        fields =  ['title','description','type','author']
 
     def validate_title(self, value):
         if Project.objects.filter(title=value).exists():
@@ -79,3 +80,6 @@ class UserSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'password', 'email']
+        # Make a new member active & staff by default, so it can do CRUD operations
+        is_active = models.BooleanField(default=True)
+        is_staff = models.BooleanField(default=True)
