@@ -18,7 +18,7 @@ class Project(models.Model):
     title = models.fields.CharField(max_length=128)
     description = models.fields.CharField(max_length=500)
     type = models.CharField(choices=TYPE_CHOICES, max_length=8)
-    author = models.ForeignKey('auth.User', related_name='projects', on_delete=models.CASCADE, blank=True)
+    author = models.ForeignKey(User, related_name='projects', on_delete=models.CASCADE, blank=True)
 
 
 class Contributor(models.Model):

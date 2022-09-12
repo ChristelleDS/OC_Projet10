@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'softdesk',
     'issues',
+    'authentication'
 ]
 
 MIDDLEWARE = [
@@ -139,3 +140,5 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
+
+AUTH_USER_MODEL = 'authentication.User'

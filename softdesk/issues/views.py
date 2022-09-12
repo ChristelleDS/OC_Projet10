@@ -1,8 +1,8 @@
 from rest_framework import generics
 from django.shortcuts import get_object_or_404
 from .models import Project, Issue, Comment, Contributor
-from .serializers import ProjectListSerializer, ProjectDetailSerializer, UserSerializer, \
-    IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer
+from .serializers import ProjectListSerializer, ProjectDetailSerializer,\
+    IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer  # UserSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import permissions
 from .permissions import IsAuthorOrReadOnly
@@ -112,8 +112,9 @@ class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-
+"""
 class UserViewset(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+"""
