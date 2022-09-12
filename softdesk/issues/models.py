@@ -64,20 +64,15 @@ class Issue(models.Model):
     desc = models.fields.CharField(max_length=700, blank=True)
     tag = models.fields.CharField(choices=Tag.choices, max_length=12)
     priority = models.fields.CharField(max_length=20, choices=PRIORITY, default='L')
-    project_id = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='issues')
-    status = models.fields.CharField(max_length=20, choices=STATUS, default='Ouvert')
-    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
-    assignee_user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assignee', blank=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='issues')
+    status = models.fields.CharField(max_length=20, choices=STATUS, default='OP')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
+    assignee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assignee', blank=True)
     created_time = models.fields.DateTimeField(default=timezone.now)
 
 
 class Comment(models.Model):
     description = models.fields.CharField(max_length=500)
-    author_user_id = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
-    issue_id = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='comments')
     created_time = models.fields.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        if self.author_user_id is None:
-            self.author_user_id = User.id
-        super().save(*args, **kwargs)

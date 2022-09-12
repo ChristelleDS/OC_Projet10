@@ -31,7 +31,7 @@ class IssueDetailSerializer(ModelSerializer):
     class Meta:
         model = Issue
         fields = ['title', 'desc', 'tag', 'priority', 'project_id', 'status',
-                  'author_user_id', 'assignee_user_id', 'created_time', 'comments']
+                  'author', 'assignee', 'created_time', 'comments']
 
     def get_comments(self, instance):
         queryset = instance.comment.filter()

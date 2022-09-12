@@ -15,16 +15,19 @@ class ProjectViewset(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        """
         projects = [
             contributors.project.id
             for contributors in Contributor.objects.filter(user=self.request.user)
         ]
         return Project.objects.filter(id__in=projects)
-        """
-        return Project.objects.filter()
+        # return Project.objects.filter()
 
     def perform_create(self, serializer):
+        """
+        Add actions to execute during the saving of the instance:
+        - save the author
+        - create the author as a contributor
+        """
         project = serializer.save(author=self.request.user)
         contributor = Contributor.objects.create(
             user=project.author,
@@ -51,12 +54,13 @@ class IssueViewset(generics.ListCreateAPIView):
             queryset = queryset.filter(project_id=project_id)
         return queryset
 
-    def save(self, *args, **kwargs):
-        if self.author_user_id is None:
-            self.author_user_id = self.request.user.id
-        if self.assignee_user_id is None:
-            self.assignee_user_id = self.request.user.id
-        super().save(*args, **kwargs)
+    def perform_create(self, serializer):
+        """
+        Add actions to execute during the saving of the instance:
+        - save the request.user as the author and default assignee
+        """
+        issue = serializer.save(author=self.request.user,
+                                assignee=self.request.user)
 
 
 class IssueDetailViewset(generics.RetrieveUpdateDestroyAPIView):
@@ -76,6 +80,12 @@ class CommentViewset(generics.ListCreateAPIView):
             queryset = queryset.filter(issue_id=issue_id)
         return queryset
 
+    def perform_create(self, serializer):
+        """
+        Add actions to execute during the saving of the instance:
+        - save the request.user as the author
+        """
+        comment = serializer.save(author=self.request.user)
 
 class CommentDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
@@ -98,7 +108,7 @@ class ContributorViewset(generics.ListCreateAPIView):
 class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Contributor.objects.all()
     serializer_class = ContributorSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class UserViewset(generics.ListCreateAPIView):
     queryset = User.objects.all()
