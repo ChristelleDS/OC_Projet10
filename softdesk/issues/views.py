@@ -105,20 +105,13 @@ class ContributorViewset(generics.ListCreateAPIView):
         if project is not None:
             queryset = queryset.filter(project=project)
         return queryset
-"""
-    def perform_create(self, serializer):
-        p_id = self.request.query_params.get('project_id')
-        print(p_id)
-        # self.context.get('project_id')
-        project = get_object_or_404(Project, id=p_id)
-        user = get_object_or_404(User, id=serializer['user'])
-        contrib = serializer.save(project=project)
-"""
+
 
 class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Contributor.objects.all()
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
 
 class UserViewset(generics.ListCreateAPIView):
     queryset = User.objects.all()
