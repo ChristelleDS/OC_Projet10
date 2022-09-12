@@ -1,4 +1,5 @@
 from rest_framework import generics
+from django.shortcuts import get_object_or_404
 from .models import Project, Issue, Comment, Contributor
 from .serializers import ProjectListSerializer, ProjectDetailSerializer, UserSerializer, \
     IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer
@@ -87,6 +88,7 @@ class CommentViewset(generics.ListCreateAPIView):
         """
         comment = serializer.save(author=self.request.user)
 
+
 class CommentDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
@@ -97,13 +99,21 @@ class ContributorViewset(generics.ListCreateAPIView):
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def get_queryset(self):
-        queryset = Contributor.objects.filter()
-        project_id = self.request.GET.get('project_id')
-        if project_id is not None:
-            queryset = queryset.filter(project_id=project_id)
+    def get_queryset(self): # A CORRIGER
+        queryset = Contributor.objects.all()
+        project = self.request.query_params.get('project_id')
+        if project is not None:
+            queryset = queryset.filter(project=project)
         return queryset
-
+"""
+    def perform_create(self, serializer):
+        p_id = self.request.query_params.get('project_id')
+        print(p_id)
+        # self.context.get('project_id')
+        project = get_object_or_404(Project, id=p_id)
+        user = get_object_or_404(User, id=serializer['user'])
+        contrib = serializer.save(project=project)
+"""
 
 class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Contributor.objects.all()

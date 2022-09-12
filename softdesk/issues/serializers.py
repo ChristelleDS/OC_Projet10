@@ -30,7 +30,7 @@ class IssueDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ['title', 'desc', 'tag', 'priority', 'project_id', 'status',
+        fields = ['id','title', 'desc', 'tag', 'priority', 'project_id', 'status',
                   'author', 'assignee', 'created_time', 'comments']
 
     def get_comments(self, instance):
@@ -50,7 +50,7 @@ class ProjectListSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields =  ['title','description','type','author']
+        fields =  ['id','title','description','type','author']
 
     def validate_title(self, value):
         if Project.objects.filter(title=value).exists():
@@ -79,7 +79,7 @@ class UserSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'password', 'email']
+        fields = ['id','username', 'first_name', 'last_name', 'password', 'email']
         # Make a new member active & staff by default, so it can do CRUD operations
         is_active = models.BooleanField(default=True)
         is_staff = models.BooleanField(default=True)
