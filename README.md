@@ -42,6 +42,8 @@ Lancer le serveur:
 python manage.py runserver
 ```
 
+## Créer un compte
+
 Pour créer un compte administrateur: 
 
 $ python manage.py createsuperuser
