@@ -73,15 +73,3 @@ class ProjectDetailSerializer(ModelSerializer):
         queryset = instance.issue.filter()
         serializer = IssueListSerializer(queryset, many=True)
         return serializer.data
-
-
-"""
-class UserSerializer(ModelSerializer):
-
-    class Meta:
-        model = User
-        fields = ['id', 'first_name', 'last_name', 'password', 'email']
-        # Make a new member active & staff by default, so it can do CRUD operations
-        is_active = models.BooleanField(default=True)
-        is_staff = models.BooleanField(default=True)
-"""
