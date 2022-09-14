@@ -20,11 +20,10 @@ class ProjectViewset(generics.ListCreateAPIView):
             for contributors in Contributor.objects.filter(user=self.request.user)
         ]
         return Project.objects.filter(id__in=projects)
-        # return Project.objects.filter()
 
     def perform_create(self, serializer):
         """
-        Add actions to execute during the saving of the instance:
+        Add actions to execute during registration of the instance:
         - save the author
         - create the author as a contributor
         """
@@ -47,7 +46,7 @@ class IssueViewset(generics.ListCreateAPIView):
     serializer_class = IssueListSerializer
     permission_classes = [permissions.IsAuthenticated, IssuePermission]
 
-    def get_queryset(self):
+    def get_queryset(self, request):
         queryset = Issue.objects.filter()
         project_id = self.request.GET.get('project_id')
         if project_id is not None:
@@ -73,7 +72,7 @@ class CommentViewset(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated, CommentPermission]
 
-    def get_queryset(self):
+    def get_queryset(self, request):
         queryset = Comment.objects.filter()
         issue_id = self.request.GET.get('issue_id')
         if issue_id is not None:
@@ -98,9 +97,9 @@ class ContributorViewset(generics.ListCreateAPIView):
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticated, ContributorPermission]
 
-    def get_queryset(self):  # A CORRIGER
+    def get_queryset(self, request):
         queryset = Contributor.objects.all()
-        project = self.request.query_params.get('project_id')
+        project = self.request.GET.get('project_id')
         if project is not None:
             queryset = queryset.filter(project=project)
         return queryset

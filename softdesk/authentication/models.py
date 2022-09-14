@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.contrib.auth.models import (
     AbstractBaseUser, PermissionsMixin, BaseUserManager
 )
+from django.contrib.auth.hashers import make_password
 
 
 class UserManager(BaseUserManager):
@@ -16,7 +17,7 @@ class UserManager(BaseUserManager):
         try:
             with transaction.atomic():
                 user = self.model(email=email, **extra_fields)
-                user.set_password(password)
+                user.password = make_password(password)
                 user.save()
                 return user
         except:
