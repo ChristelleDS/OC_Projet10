@@ -1,11 +1,10 @@
 from rest_framework import generics
-from django.shortcuts import get_object_or_404
 from .models import Project, Issue, Comment, Contributor
 from .serializers import ProjectListSerializer, ProjectDetailSerializer,\
     IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer  # UserSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import permissions
-from .permissions import IsAuthorOrReadOnly
+from .permissions import ProjectPermission, IssuePermission, CommentPermission
 
 
 User = get_user_model()
@@ -13,7 +12,7 @@ User = get_user_model()
 
 class ProjectViewset(generics.ListCreateAPIView):
     serializer_class = ProjectListSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [ProjectPermission]
 
     def get_queryset(self):
         projects = [
@@ -41,12 +40,12 @@ class ProjectViewset(generics.ListCreateAPIView):
 class ProjectDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectDetailSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [ProjectPermission]
 
 
 class IssueViewset(generics.ListCreateAPIView):
     serializer_class = IssueListSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IssuePermission]
 
     def get_queryset(self):
         queryset = Issue.objects.filter()
@@ -67,12 +66,12 @@ class IssueViewset(generics.ListCreateAPIView):
 class IssueDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Issue.objects.all()
     serializer_class = IssueDetailSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [IssuePermission]
 
 
 class CommentViewset(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [CommentPermission]
 
     def get_queryset(self):
         queryset = Comment.objects.filter()
@@ -92,14 +91,14 @@ class CommentViewset(generics.ListCreateAPIView):
 class CommentDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [CommentPermission]
 
 
 class ContributorViewset(generics.ListCreateAPIView):
     serializer_class = ContributorSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self): # A CORRIGER
+    def get_queryset(self):  # A CORRIGER
         queryset = Contributor.objects.all()
         project = self.request.query_params.get('project_id')
         if project is not None:
@@ -110,11 +109,4 @@ class ContributorViewset(generics.ListCreateAPIView):
 class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Contributor.objects.all()
     serializer_class = ContributorSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
-"""
-class UserViewset(generics.ListCreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-"""
+    permission_classes = [permissions.IsAuthenticated]
