@@ -22,13 +22,10 @@ class ProjectPermission(permissions.BasePermission):
     Contributors can list theirs projects, read a project
     """
     message = 'Unauthorized action for this user.'
-
+    """
     def has_permission(self, request, view):
-        """
-        :return: True if user authenticated
-        """
         return request.user and request.user.is_authenticated
-
+    """
     def has_object_permission(self, request, view, obj):
         """
         Check if the user is a contributor on the project.
@@ -51,8 +48,8 @@ class IssuePermission(permissions.BasePermission):
     message = 'Unauthorized action for this user.'
 
     def has_object_permission(self, request, view, obj):
-        if not request.user.is_authenticated:
-            return False
+        # if not request.user.is_authenticated:
+        #    return False
         if view.action in ['retrieve', 'list', 'create']:
             return check_contributor(request.user, obj.project_id)
         elif view.action in ['update', 'partial_update', 'destroy']:
@@ -64,12 +61,11 @@ class CommentPermission(permissions.BasePermission):
     Comment authors can update or delete their comments.
     Project contributors can read or create comments.
     """
-
     message = 'Unauthorized action for this user.'
 
     def has_object_permission(self, request, view, obj):
-        if not request.user.is_authenticated:
-            return False
+        # if not request.user.is_authenticated:
+        #    return False
 
         if view.action in ['retrieve', 'list', 'create']:
             return check_contributor(request.user, obj.issue_id.project_id)
@@ -85,8 +81,8 @@ class ContributorPermission(permissions.BasePermission):
     message = 'Unauthorized action for this user.'
 
     def has_permission(self, request, view):
-        if not request.user and request.user.is_authenticated:
-            return False
+        # if not request.user and request.user.is_authenticated:
+        #    return False
 
         if view.action in ['retrieve', 'list']:
             return check_contributor(request.user, Project.objects.filter(id=view.kwargs['projects_pk']).first())
