@@ -1,4 +1,7 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics
+from rest_framework.response import Response
+
 from .models import Project, Issue, Comment, Contributor
 from .serializers import ProjectListSerializer, ProjectDetailSerializer,\
     IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer  # UserSerializer
@@ -40,6 +43,12 @@ class ProjectDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectDetailSerializer
     permission_classes = [permissions.IsAuthenticated, ProjectPermission]
+
+    def retrieve(self, request, pk=None):
+        queryset = Project.objects.all()
+        project = get_object_or_404(queryset, pk=pk)
+        serializer = ProjectDetailSerializer(project)
+        return Response(serializer.data)
 
 
 class IssueViewset(generics.ListCreateAPIView):
