@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.response import Response
 
 from .models import Project, Issue, Comment, Contributor
@@ -51,16 +51,28 @@ class ProjectDetailViewset(generics.RetrieveUpdateDestroyAPIView):
         return Response(serializer.data)
 
 
+    def update(self, request, pk=None):
+        queryset = Project.objects.all()
+        project = get_object_or_404(queryset, pk=pk)
+        serializer = ProjectListSerializer(project, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        queryset = Project.objects.all()
+        project = get_object_or_404(queryset, pk=pk)
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class IssueViewset(generics.ListCreateAPIView):
     serializer_class = IssueListSerializer
     permission_classes = [permissions.IsAuthenticated, IssuePermission]
 
-    def get_queryset(self, request):
-        queryset = Issue.objects.filter()
-        project_id = self.request.GET.get('project_id')
-        if project_id is not None:
-            queryset = queryset.filter(project_id=project_id)
-        return queryset
+    def get_queryset(self):
+        return Issue.objects.filter(project_id=self.kwargs['project_id'])
 
     def perform_create(self, serializer):
         """
@@ -76,17 +88,33 @@ class IssueDetailViewset(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = IssueDetailSerializer
     permission_classes = [permissions.IsAuthenticated, IssuePermission]
 
+    def retrieve(self):
+        issue_id=self.kwargs['pk']
+        issue = Issue.objects.all(id=issue_id)
+        serializer = IssueDetailSerializer(issue)
+        return Response(serializer.data)
+
+    def update(self, request, pk=None):
+        queryset = Issue.objects.all()
+        issue = get_object_or_404(queryset, pk=pk)
+        serializer = IssueListSerializer(issue, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        queryset = Issue.objects.all()
+        project = get_object_or_404(queryset, pk=pk)
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class CommentViewset(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated, CommentPermission]
 
-    def get_queryset(self, request):
-        queryset = Comment.objects.filter()
-        issue_id = self.request.GET.get('issue_id')
-        if issue_id is not None:
-            queryset = queryset.filter(issue_id=issue_id)
-        return queryset
+    def get_queryset(self):
+        return Comment.objects.filter(issue_id=self.kwargs['issue_id'])
 
     def perform_create(self, serializer):
         """
@@ -106,12 +134,8 @@ class ContributorViewset(generics.ListCreateAPIView):
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticated, ContributorPermission]
 
-    def get_queryset(self, request):
-        queryset = Contributor.objects.all()
-        project = self.request.GET.get('project_id')
-        if project is not None:
-            queryset = queryset.filter(project=project)
-        return queryset
+    def get_queryset(self):
+        return Contributor.objects.filter(project_id=self.kwargs['project_id'])
 
 
 class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
