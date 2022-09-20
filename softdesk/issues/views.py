@@ -1,20 +1,38 @@
-from django.shortcuts import get_object_or_404
+from rest_framework.generics import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
-
 from .models import Project, Issue, Comment, Contributor
 from .serializers import ProjectListSerializer, ProjectDetailSerializer,\
     IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer  # UserSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import permissions
+from rest_framework.views import APIView
+from rest_framework import viewsets
 from .permissions import ProjectPermission, IssuePermission, CommentPermission, ContributorPermission
+from rest_framework.decorators import api_view
 
 
 User = get_user_model()
 
 
-class ProjectViewset(generics.ListCreateAPIView):
+class MultipleSerializerMixin:
+    # Un mixin est une classe qui ne fonctionne pas de façon autonome
+    # Elle permet d'ajouter des fonctionnalités aux classes qui les étendent
+
+    detail_serializer_class = None
+
+    def get_serializer_class(self):
+        # Notre mixin détermine quel serializer à utiliser
+        # même si elle ne sait pas ce que c'est ni comment l'utiliser
+        if self.action == 'retrieve' and self.detail_serializer_class is not None:
+            # Si l'action demandée est le détail alors nous retournons le serializer de détail
+            return self.detail_serializer_class
+        return super().get_serializer_class()
+
+
+class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = ProjectListSerializer
+    detail_serializer_class = ProjectDetailSerializer
     permission_classes = [permissions.IsAuthenticated, ProjectPermission]
 
     def get_queryset(self):
@@ -38,18 +56,11 @@ class ProjectViewset(generics.ListCreateAPIView):
             role='AUTH'
         )
 
-
-class ProjectDetailViewset(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Project.objects.all()
-    serializer_class = ProjectDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, ProjectPermission]
-
     def retrieve(self, request, pk=None):
         queryset = Project.objects.all()
         project = get_object_or_404(queryset, pk=pk)
         serializer = ProjectDetailSerializer(project)
         return Response(serializer.data)
-
 
     def update(self, request, pk=None):
         queryset = Project.objects.all()
@@ -67,12 +78,13 @@ class ProjectDetailViewset(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class IssueViewset(generics.ListCreateAPIView):
+class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = IssueListSerializer
+    detail_serializer_class = IssueDetailSerializer
     permission_classes = [permissions.IsAuthenticated, IssuePermission]
 
     def get_queryset(self):
-        return Issue.objects.filter(project_id=self.kwargs['project_id'])
+        return Issue.objects.filter(project_id=self.kwargs['project_pk'])
 
     def perform_create(self, serializer):
         """
@@ -82,39 +94,31 @@ class IssueViewset(generics.ListCreateAPIView):
         issue = serializer.save(author=self.request.user,
                                 assignee=self.request.user)
 
-
-class IssueDetailViewset(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Issue.objects.all()
-    serializer_class = IssueDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IssuePermission]
-
-    def retrieve(self):
-        issue_id=self.kwargs['pk']
-        issue = Issue.objects.all(id=issue_id)
+    def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):
+        issue = get_object_or_404(Issue, pk=pk)
         serializer = IssueDetailSerializer(issue)
         return Response(serializer.data)
 
-    def update(self, request, pk=None):
-        queryset = Issue.objects.all()
-        issue = get_object_or_404(queryset, pk=pk)
+    def update(self, request, project_pk=None, pk=None, *args, **kwargs):
+        issue = get_object_or_404(Issue, pk=pk)
         serializer = IssueListSerializer(issue, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def destroy(self, request, pk=None):
-        queryset = Issue.objects.all()
-        project = get_object_or_404(queryset, pk=pk)
-        project.delete()
+    def destroy(self, request, project_pk=None, pk=None, *args, **kwargs):
+        issue = get_object_or_404(Issue, pk=pk)
+        issue.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class CommentViewset(generics.ListCreateAPIView):
+class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    detail_serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated, CommentPermission]
 
     def get_queryset(self):
-        return Comment.objects.filter(issue_id=self.kwargs['issue_id'])
+        return Comment.objects.filter(issue_id= self.request.kwargs['issue_pk'])
 
     def perform_create(self, serializer):
         """
@@ -123,22 +127,32 @@ class CommentViewset(generics.ListCreateAPIView):
         """
         comment = serializer.save(author=self.request.user)
 
+    def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):
+        comment = get_object_or_404(Comment, pk=pk)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data)
 
-class CommentDetailViewset(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated, CommentPermission]
+    def update(self, request, project_pk=None, pk=None, *args, **kwargs):
+        comment = get_object_or_404(Comment, pk=pk)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, project_pk=None, pk=None, *args, **kwargs):
+        comment = get_object_or_404(Comment, pk=pk)
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ContributorViewset(generics.ListCreateAPIView):
+class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = ContributorSerializer
+    detail_serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticated, ContributorPermission]
 
-    def get_queryset(self):
-        return Contributor.objects.filter(project_id=self.kwargs['project_id'])
-
-
-class ContributorDetailViewset(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Contributor.objects.all()
-    serializer_class = ContributorSerializer
-    permission_classes = [permissions.IsAuthenticated, ContributorPermission]
+    def get_queryset(self, request, project_pk):
+        contrib_ids = [contributor.user.id
+                       for contributor
+                       in Contributor.objects.filter(project_id=project_pk)]
+        return User.objects.filter(id__in=contrib_ids)

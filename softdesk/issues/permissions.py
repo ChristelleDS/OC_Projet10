@@ -81,11 +81,9 @@ class ContributorPermission(permissions.BasePermission):
     message = 'Unauthorized action for this user.'
 
     def has_permission(self, request, view):
-        # if not request.user and request.user.is_authenticated:
-        #    return False
 
         if view.action in ['retrieve', 'list']:
-            return check_contributor(request.user, Project.objects.filter(id=view.kwargs['projects_pk']).first())
+            return check_contributor(request.user, Project.objects.filter(id=view.kwargs['project_pk']).first())
 
         elif view.action in ['update', 'partial_update', 'create', 'destroy']:
-            return request.user == Project.objects.filter(id=view.kwargs['projects_pk']).first().author
+            return request.user == Project.objects.filter(id=view.kwargs['project_pk']).first().author.id
