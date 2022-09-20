@@ -1,15 +1,15 @@
 from rest_framework.generics import get_object_or_404
-from rest_framework import generics, status
+from rest_framework import status
 from rest_framework.response import Response
+from django.db import IntegrityError
 from .models import Project, Issue, Comment, Contributor
 from .serializers import ProjectListSerializer, ProjectDetailSerializer,\
-    IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer  # UserSerializer
+    IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import permissions
-from rest_framework.views import APIView
 from rest_framework import viewsets
 from .permissions import ProjectPermission, IssuePermission, CommentPermission, ContributorPermission
-from rest_framework.decorators import api_view
+
 
 
 User = get_user_model()
@@ -72,8 +72,7 @@ class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
-        queryset = Project.objects.all()
-        project = get_object_or_404(queryset, pk=pk)
+        project = get_object_or_404(Project, pk=pk)
         project.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -149,10 +148,37 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = ContributorSerializer
     detail_serializer_class = ContributorSerializer
-    permission_classes = [permissions.IsAuthenticated, ContributorPermission]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self, request, project_pk):
-        contrib_ids = [contributor.user.id
+    def get_queryset(self):
+        contribs = [contributor.user_id
                        for contributor
-                       in Contributor.objects.filter(project_id=project_pk)]
-        return User.objects.filter(id__in=contrib_ids)
+                       in Contributor.objects.filter(project_id=self.kwargs['project_pk'])]
+        print(contribs)
+        return User.objects.filter(id__in=contribs)
+
+    def perform_create(self, serializer):
+        """
+        Add a user to a project as a contributor if :
+        - the user exists in the database
+        - the user is not already a contributor of this project.
+        """
+        contributor = serializer.save()
+
+    def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):
+        contrib = get_object_or_404(Contributor, pk=pk)
+        serializer = ContributorSerializer(contrib)
+        return Response(serializer.data)
+
+    def update(self, request, project_pk=None, pk=None, *args, **kwargs):
+        contrib = get_object_or_404(Contributor, pk=pk)
+        serializer = ContributorSerializer(contrib, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, project_pk=None, pk=None):
+        contrib = get_object_or_404(Contributor, pk=pk)
+        contrib.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
