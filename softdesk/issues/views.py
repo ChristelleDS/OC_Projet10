@@ -151,11 +151,7 @@ class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        contribs = [contributor.user_id
-                       for contributor
-                       in Contributor.objects.filter(project_id=self.kwargs['project_pk'])]
-        print(contribs)
-        return User.objects.filter(id__in=contribs)
+        return Contributor.objects.filter(project_id=self.kwargs['project_pk'])
 
     def perform_create(self, serializer):
         """
