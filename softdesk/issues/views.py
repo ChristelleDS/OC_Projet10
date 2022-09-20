@@ -118,7 +118,7 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, CommentPermission]
 
     def get_queryset(self):
-        return Comment.objects.filter(issue_id= self.request.kwargs['issue_pk'])
+        return Comment.objects.filter(issue_id=self.kwargs['issue_pk'])
 
     def perform_create(self, serializer):
         """
