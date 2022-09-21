@@ -82,7 +82,7 @@ class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = IssueListSerializer
     detail_serializer_class = IssueDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, IssuePermission]
+    permission_classes = [permissions.IsAuthenticated & IssuePermission]
 
     def get_queryset(self):
         return Issue.objects.filter(project_id=self.kwargs['project_pk'])
@@ -92,6 +92,8 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         Add actions to execute during the saving of the instance:
         - save the request.user as the author and default assignee
         """
+        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
+        self.check_object_permissions(self.request, project)
         issue = serializer.save(author=self.request.user,
                                 assignee=self.request.user)
 
@@ -119,7 +121,7 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     detail_serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated, CommentPermission]
+    permission_classes = [permissions.IsAuthenticated & CommentPermission]
 
     def get_queryset(self):
         return Comment.objects.filter(issue_id=self.kwargs['issue_pk'])
@@ -129,6 +131,8 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         Add actions to execute during the saving of the instance:
         - save the request.user as the author
         """
+        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
+        self.check_object_permissions(self.request, project)
         comment = serializer.save(author=self.request.user)
 
     def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):
