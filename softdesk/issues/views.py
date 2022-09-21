@@ -33,12 +33,12 @@ class MultipleSerializerMixin:
 class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectDetailSerializer
-    permission_classes = [permissions.IsAuthenticated, ProjectPermission]
+    permission_classes = [permissions.IsAuthenticated & ProjectPermission]
 
     def get_queryset(self):
         projects = [
             contributors.project.id
-            for contributors in Contributor.objects.filter(user=self.request.user)
+            for contributors in Contributor.objects.filter(user_id=self.request.user.id)
         ]
         return Project.objects.filter(id__in=projects)
 
@@ -59,12 +59,13 @@ class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     def retrieve(self, request, pk=None):
         queryset = Project.objects.all()
         project = get_object_or_404(queryset, pk=pk)
+        self.check_object_permissions(self.request, project)
         serializer = ProjectDetailSerializer(project)
         return Response(serializer.data)
 
     def update(self, request, pk=None):
-        queryset = Project.objects.all()
-        project = get_object_or_404(queryset, pk=pk)
+        project = get_object_or_404(Project, pk=pk)
+        self.check_object_permissions(self.request, project)
         serializer = ProjectListSerializer(project, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -73,6 +74,7 @@ class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 
     def destroy(self, request, pk=None):
         project = get_object_or_404(Project, pk=pk)
+        self.check_object_permissions(self.request, project)
         project.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -95,11 +97,13 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 
     def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):
         issue = get_object_or_404(Issue, pk=pk)
+        self.check_object_permissions(self.request, issue)
         serializer = IssueDetailSerializer(issue)
         return Response(serializer.data)
 
     def update(self, request, project_pk=None, pk=None, *args, **kwargs):
         issue = get_object_or_404(Issue, pk=pk)
+        self.check_object_permissions(self.request, issue)
         serializer = IssueListSerializer(issue, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -108,6 +112,7 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 
     def destroy(self, request, project_pk=None, pk=None, *args, **kwargs):
         issue = get_object_or_404(Issue, pk=pk)
+        self.check_object_permissions(self.request, issue)
         issue.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -128,11 +133,13 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 
     def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):
         comment = get_object_or_404(Comment, pk=pk)
+        self.check_object_permissions(self.request, comment)
         serializer = CommentSerializer(comment)
         return Response(serializer.data)
 
     def update(self, request, project_pk=None, pk=None, *args, **kwargs):
         comment = get_object_or_404(Comment, pk=pk)
+        self.check_object_permissions(self.request, comment)
         serializer = CommentSerializer(comment, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -141,6 +148,7 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 
     def destroy(self, request, project_pk=None, pk=None, *args, **kwargs):
         comment = get_object_or_404(Comment, pk=pk)
+        self.check_object_permissions(self.request, comment)
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -148,7 +156,7 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = ContributorSerializer
     detail_serializer_class = ContributorSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated|ContributorPermission]
 
     def get_queryset(self):
         return Contributor.objects.filter(project_id=self.kwargs['project_pk'])
@@ -163,11 +171,13 @@ class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 
     def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):
         contrib = get_object_or_404(Contributor, pk=pk)
+        self.check_object_permissions(self.request, contrib)
         serializer = ContributorSerializer(contrib)
         return Response(serializer.data)
 
     def update(self, request, project_pk=None, pk=None, *args, **kwargs):
         contrib = get_object_or_404(Contributor, pk=pk)
+        self.check_object_permissions(self.request, contrib)
         serializer = ContributorSerializer(contrib, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -176,5 +186,6 @@ class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 
     def destroy(self, request, project_pk=None, pk=None):
         contrib = get_object_or_404(Contributor, pk=pk)
+        self.check_object_permissions(self.request, contrib)
         contrib.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

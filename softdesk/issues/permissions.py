@@ -9,9 +9,9 @@ def check_contributor(user, project):
     :param project:
     :return: True if the user is a contributor
     """
-    for contributor in Contributor.objects.filter(project_id=project.id):
-        if user == contributor.user_id:
-            return True
+    contrib = Contributor.objects.filter(project_id=project.id, user_id=user.id)
+    if contrib:
+        return True
     return False
 
 
@@ -22,10 +22,10 @@ class ProjectPermission(permissions.BasePermission):
     Contributors can list theirs projects, read a project
     """
     message = 'Unauthorized action for this user.'
-    """
+
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated
-    """
+        return request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
         """
         Check if the user is a contributor on the project.
@@ -35,9 +35,13 @@ class ProjectPermission(permissions.BasePermission):
         :return: True if authorized user
         """
         if view.action in ['retrieve', 'list']:
+            print(check_contributor(request.user, obj))
             return check_contributor(request.user, obj)
         elif view.action in ['update', 'partial_update', 'destroy']:
-            return request.user == obj.author_user_id
+            print(request.user == obj.author)
+            if request.user == obj.author:
+                return True
+            return False
 
 
 class IssuePermission(permissions.BasePermission):
@@ -80,7 +84,7 @@ class ContributorPermission(permissions.BasePermission):
     """
     message = 'Unauthorized action for this user.'
 
-    def has_permission(self, request, view):
+    def has_object_permission(self, request, view, obj):
 
         if view.action in ['retrieve', 'list']:
             return check_contributor(request.user, Project.objects.filter(id=view.kwargs['project_pk']).first())
