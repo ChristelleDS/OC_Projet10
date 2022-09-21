@@ -156,7 +156,7 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = ContributorSerializer
     detail_serializer_class = ContributorSerializer
-    permission_classes = [permissions.IsAuthenticated|ContributorPermission]
+    permission_classes = [permissions.IsAuthenticated & ContributorPermission]
 
     def get_queryset(self):
         return Contributor.objects.filter(project_id=self.kwargs['project_pk'])
@@ -167,6 +167,8 @@ class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         - the user exists in the database
         - the user is not already a contributor of this project.
         """
+        project = get_object_or_404(Project,pk=self.kwargs['project_pk'])
+        self.check_object_permissions(self.request, project)
         contributor = serializer.save()
 
     def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):

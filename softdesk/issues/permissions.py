@@ -35,10 +35,8 @@ class ProjectPermission(permissions.BasePermission):
         :return: True if authorized user
         """
         if view.action in ['retrieve', 'list']:
-            print(check_contributor(request.user, obj))
             return check_contributor(request.user, obj)
         elif view.action in ['update', 'partial_update', 'destroy']:
-            print(request.user == obj.author)
             if request.user == obj.author:
                 return True
             return False
@@ -85,7 +83,6 @@ class ContributorPermission(permissions.BasePermission):
     message = 'Unauthorized action for this user.'
 
     def has_object_permission(self, request, view, obj):
-
         if view.action in ['retrieve', 'list']:
             return check_contributor(request.user, Project.objects.filter(id=view.kwargs['project_pk']).first())
 
