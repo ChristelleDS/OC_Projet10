@@ -36,6 +36,9 @@ class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated & ProjectPermission]
 
     def get_queryset(self):
+        """
+        :return: list of projects which the user is a contributor
+        """
         projects = [
             contributors.project.id
             for contributors in Contributor.objects.filter(user_id=self.request.user.id)
@@ -47,6 +50,7 @@ class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         Add actions to execute during registration of the instance:
         - save the author
         - create the author as a contributor
+        Any user can create a new project.
         """
         project = serializer.save(author=self.request.user)
         contributor = Contributor.objects.create(
@@ -57,6 +61,9 @@ class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         )
 
     def retrieve(self, request, pk=None):
+        """
+        Only a contributor of the project can read details about it.
+        """
         queryset = Project.objects.all()
         project = get_object_or_404(queryset, pk=pk)
         self.check_object_permissions(self.request, project)
@@ -64,6 +71,9 @@ class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def update(self, request, pk=None):
+        """
+        Only the author of the project can update it.
+        """
         project = get_object_or_404(Project, pk=pk)
         self.check_object_permissions(self.request, project)
         serializer = ProjectListSerializer(project, data=request.data)
@@ -73,6 +83,9 @@ class ProjectViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
+        """
+        Only the author of the project can delete it.
+        """
         project = get_object_or_404(Project, pk=pk)
         self.check_object_permissions(self.request, project)
         project.delete()
@@ -85,6 +98,12 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated & IssuePermission]
 
     def get_queryset(self):
+        """
+        Only a contributor of the project can get the list of issues.
+        :return: list of issues for the project in param
+        """
+        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
+        self.check_object_permissions(self.request, project)
         return Issue.objects.filter(project_id=self.kwargs['project_pk'])
 
     def perform_create(self, serializer):
@@ -98,10 +117,19 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
                                 assignee=self.request.user)
 
     def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):
+        """
+        Check requested data:
+        - if project and issue don't match: error "unknown data" is raised
+        - if match : return detailed data if permissions ok
+        """
         issue = get_object_or_404(Issue, pk=pk)
-        self.check_object_permissions(self.request, issue)
-        serializer = IssueDetailSerializer(issue)
-        return Response(serializer.data)
+        project = get_object_or_404(Project, pk=project_pk)
+        if issue.project.id == project.id:
+            self.check_object_permissions(self.request, project)
+            serializer = IssueDetailSerializer(issue)
+            return Response(serializer.data)
+        else:
+            return Response('Unknown data requested',status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, project_pk=None, pk=None, *args, **kwargs):
         issue = get_object_or_404(Issue, pk=pk)
@@ -124,6 +152,12 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated & CommentPermission]
 
     def get_queryset(self):
+        """
+        Only a contributor of the project can get the list of comments on an issue.
+        :return: list of comments for the issue in param
+        """
+        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
+        self.check_object_permissions(self.request, project)
         return Comment.objects.filter(issue_id=self.kwargs['issue_pk'])
 
     def perform_create(self, serializer):
@@ -163,6 +197,8 @@ class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated & ContributorPermission]
 
     def get_queryset(self):
+        project = get_object_or_404(Project,pk=self.kwargs['project_pk'])
+        self.check_object_permissions(self.request, project)
         return Contributor.objects.filter(project_id=self.kwargs['project_pk'])
 
     def perform_create(self, serializer):

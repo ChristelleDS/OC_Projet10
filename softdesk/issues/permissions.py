@@ -53,9 +53,9 @@ class IssuePermission(permissions.BasePermission):
         # if not request.user.is_authenticated:
         #    return False
         if view.action in ['retrieve', 'list', 'create']:
-            return check_contributor(request.user, obj.project_id)
+            return check_contributor(request.user, Project.objects.filter(id=view.kwargs['project_pk']).first())
         elif view.action in ['update', 'partial_update', 'destroy']:
-            return request.user == obj.author_user_id
+            return request.user == obj.author.id
 
 
 class CommentPermission(permissions.BasePermission):
@@ -70,9 +70,9 @@ class CommentPermission(permissions.BasePermission):
         #    return False
 
         if view.action in ['retrieve', 'list', 'create']:
-            return check_contributor(request.user, obj.issue_id.project_id)
+            return check_contributor(request.user, Project.objects.filter(id=view.kwargs['project_pk']).first())
         elif view.action in ['update', 'partial_update', 'destroy']:
-            return request.user == obj.author_user_id
+            return request.user == obj.author.id
 
 
 class ContributorPermission(permissions.BasePermission):
