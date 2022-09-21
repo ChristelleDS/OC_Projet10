@@ -55,7 +55,7 @@ class IssuePermission(permissions.BasePermission):
         if view.action in ['retrieve', 'list', 'create']:
             return check_contributor(request.user, Project.objects.filter(id=view.kwargs['project_pk']).first())
         elif view.action in ['update', 'partial_update', 'destroy']:
-            return request.user == obj.author.id
+            return request.user == obj.author
 
 
 class CommentPermission(permissions.BasePermission):
@@ -72,7 +72,7 @@ class CommentPermission(permissions.BasePermission):
         if view.action in ['retrieve', 'list', 'create']:
             return check_contributor(request.user, Project.objects.filter(id=view.kwargs['project_pk']).first())
         elif view.action in ['update', 'partial_update', 'destroy']:
-            return request.user == obj.author.id
+            return request.user == obj.author
 
 
 class ContributorPermission(permissions.BasePermission):

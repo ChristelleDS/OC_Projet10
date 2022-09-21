@@ -125,7 +125,7 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         issue = get_object_or_404(Issue, pk=pk)
         project = get_object_or_404(Project, pk=project_pk)
         if issue.project.id == project.id:
-            self.check_object_permissions(self.request, project)
+            self.check_object_permissions(self.request, issue)
             serializer = IssueDetailSerializer(issue)
             return Response(serializer.data)
         else:
@@ -133,12 +133,16 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
 
     def update(self, request, project_pk=None, pk=None, *args, **kwargs):
         issue = get_object_or_404(Issue, pk=pk)
-        self.check_object_permissions(self.request, issue)
-        serializer = IssueListSerializer(issue, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        project = get_object_or_404(Project, pk=project_pk)
+        if issue.project.id == project.id:
+            self.check_object_permissions(self.request, issue)
+            serializer = IssueListSerializer(issue, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response('Unknown data requested',status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, project_pk=None, pk=None, *args, **kwargs):
         issue = get_object_or_404(Issue, pk=pk)
@@ -169,20 +173,36 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         self.check_object_permissions(self.request, project)
         comment = serializer.save(author=self.request.user)
 
-    def retrieve(self, request, project_pk=None, pk=None, *args, **kwargs):
+    def retrieve(self, request, project_pk=None, issue_pk=None, pk=None, *args, **kwargs):
+        """
+        Check data integrity: does the comment belong to an issue belonging to the project?
+        - if integrity error: "unknown data requested" is raised
+        - else requested data are returned
+        """
+        project = get_object_or_404(Project, pk=project_pk)
+        issue = get_object_or_404(Issue, pk=issue_pk)
         comment = get_object_or_404(Comment, pk=pk)
-        self.check_object_permissions(self.request, comment)
-        serializer = CommentSerializer(comment)
-        return Response(serializer.data)
-
-    def update(self, request, project_pk=None, pk=None, *args, **kwargs):
-        comment = get_object_or_404(Comment, pk=pk)
-        self.check_object_permissions(self.request, comment)
-        serializer = CommentSerializer(comment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
+        if (issue.project.id == project.id and issue.id == comment.issue.id):
+            self.check_object_permissions(self.request, project)
+            serializer = CommentSerializer(comment)
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response('Unknown data requested', status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, project_pk=None, issue_pk=None, pk=None, *args, **kwargs):
+        issue = get_object_or_404(Issue, pk=issue_pk)
+        project = get_object_or_404(Project, pk=project_pk)
+        comment = get_object_or_404(Comment, pk=pk)
+        if (issue.project.id == project.id and issue.id == comment.issue.id):
+            self.check_object_permissions(self.request, comment)
+            serializer = CommentSerializer(comment, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response('Unknown data requested',status=status.HTTP_400_BAD_REQUEST)
+
 
     def destroy(self, request, project_pk=None, pk=None, *args, **kwargs):
         comment = get_object_or_404(Comment, pk=pk)
