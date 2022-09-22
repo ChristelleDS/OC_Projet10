@@ -87,4 +87,4 @@ class ContributorPermission(permissions.BasePermission):
             return check_contributor(request.user, Project.objects.filter(id=view.kwargs['project_pk']).first())
 
         elif view.action in ['update', 'partial_update', 'create', 'destroy']:
-            return request.user == Project.objects.filter(id=view.kwargs['project_pk']).first().author.id
+            return request.user == Project.objects.filter(id=view.kwargs['project_pk']).first().author
