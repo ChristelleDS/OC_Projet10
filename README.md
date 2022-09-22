@@ -45,9 +45,9 @@ python manage.py runserver
 ## Créer un compte
 
 Pour créer un compte administrateur: 
-
+```
 $ python manage.py createsuperuser
-
+```
 Créer ensuite un compte utilisateur via http://localhost:8000/api/signup/. 
 Vous pouvez ensuite utiliser l'applicaton via les différents endpoints décrits dans la documentation. 
 
