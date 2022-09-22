@@ -1,7 +1,6 @@
 from rest_framework.serializers import ModelSerializer, ValidationError
 from .models import Project, Contributor, Issue, Comment
 from django.contrib.auth import get_user_model
-from django.db import models
 
 
 User = get_user_model()
@@ -30,7 +29,7 @@ class IssueDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ['id','title', 'desc', 'tag', 'priority', 'project_id', 'status',
+        fields = ['id', 'title', 'desc', 'tag', 'priority', 'project_id', 'status',
                   'author', 'assignee', 'created_time', 'comments']
 
     def get_comments(self, instance):
@@ -43,14 +42,14 @@ class ContributorSerializer(ModelSerializer):
 
     class Meta:
         model = Contributor
-        fields = ['id','user','project','permission','role']
+        fields = ['id', 'user', 'project', 'permission', 'role']
 
 
 class ProjectListSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields =  ['id','title','description','type','author']
+        fields = ['id', 'title', 'description', 'type', 'author']
 
     def validate_title(self, value):
         if Project.objects.filter(title=value).exists():

@@ -1,7 +1,6 @@
 from rest_framework.generics import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
-from django.db import IntegrityError
 from .models import Project, Issue, Comment, Contributor
 from .serializers import ProjectListSerializer, ProjectDetailSerializer,\
     IssueListSerializer, IssueDetailSerializer, CommentSerializer, ContributorSerializer
@@ -9,7 +8,6 @@ from django.contrib.auth import get_user_model
 from rest_framework import permissions
 from rest_framework import viewsets
 from .permissions import ProjectPermission, IssuePermission, CommentPermission, ContributorPermission
-
 
 
 User = get_user_model()
@@ -129,7 +127,7 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
             serializer = IssueDetailSerializer(issue)
             return Response(serializer.data)
         else:
-            return Response('Unknown data requested',status=status.HTTP_400_BAD_REQUEST)
+            return Response('Unknown data requested', status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, project_pk=None, pk=None, *args, **kwargs):
         issue = get_object_or_404(Issue, pk=pk)
@@ -142,13 +140,14 @@ class IssueViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response('Unknown data requested',status=status.HTTP_400_BAD_REQUEST)
+            return Response('Unknown data requested', status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, project_pk=None, pk=None, *args, **kwargs):
         issue = get_object_or_404(Issue, pk=pk)
         self.check_object_permissions(self.request, issue)
         issue.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     serializer_class = CommentSerializer
@@ -182,7 +181,7 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         project = get_object_or_404(Project, pk=project_pk)
         issue = get_object_or_404(Issue, pk=issue_pk)
         comment = get_object_or_404(Comment, pk=pk)
-        if (issue.project.id == project.id and issue.id == comment.issue.id):
+        if issue.project.id == project.id and issue.id == comment.issue.id:
             self.check_object_permissions(self.request, project)
             serializer = CommentSerializer(comment)
             return Response(serializer.data)
@@ -193,7 +192,7 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         issue = get_object_or_404(Issue, pk=issue_pk)
         project = get_object_or_404(Project, pk=project_pk)
         comment = get_object_or_404(Comment, pk=pk)
-        if (issue.project.id == project.id and issue.id == comment.issue.id):
+        if issue.project.id == project.id and issue.id == comment.issue.id:
             self.check_object_permissions(self.request, comment)
             serializer = CommentSerializer(comment, data=request.data)
             if serializer.is_valid():
@@ -201,8 +200,7 @@ class CommentViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response('Unknown data requested',status=status.HTTP_400_BAD_REQUEST)
-
+            return Response('Unknown data requested', status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, project_pk=None, pk=None, *args, **kwargs):
         comment = get_object_or_404(Comment, pk=pk)
@@ -217,7 +215,7 @@ class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated & ContributorPermission]
 
     def get_queryset(self):
-        project = get_object_or_404(Project,pk=self.kwargs['project_pk'])
+        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
         self.check_object_permissions(self.request, project)
         return Contributor.objects.filter(project_id=self.kwargs['project_pk'])
 
@@ -227,7 +225,7 @@ class ContributorViewset(MultipleSerializerMixin, viewsets.ModelViewSet):
         - the user exists in the database
         - the user is not already a contributor of this project.
         """
-        project = get_object_or_404(Project,pk=self.kwargs['project_pk'])
+        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
         self.check_object_permissions(self.request, project)
         contributor = serializer.save()
 

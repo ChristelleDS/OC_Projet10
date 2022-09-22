@@ -3,32 +3,30 @@ from django.urls import path, include
 from rest_framework_nested import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from issues.views import ProjectViewset, IssueViewset, ContributorViewset, CommentViewset
-                         # IssueDetailViewset, ContributorDetailViewset, CommentDetailViewset, UserViewset, ProjectDetailViewset,
 from authentication.views import CreateUserAPIView
-
 
 
 router = routers.SimpleRouter()
 router.register(r'projects', ProjectViewset, basename='projects')
-## generates:
+# generates:
 # /projects/
 # /projects/{pk}/
 
 issue_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
 issue_router.register(r'issues', IssueViewset, basename='issues')
-## generates:
+# generates:
 # /projects/{project_pk}/issues/
 # /projects/{project_pk}/issues/{pk}/
 
 user_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
 user_router.register(r'users', ContributorViewset, basename='users')
-## generates:
+# generates:
 # /projects/{project_pk}/users/
 # /projects/{project_pk}/users/{pk}/
 
 comment_router = routers.NestedSimpleRouter(issue_router, r'issues', lookup='issue')
 comment_router.register(r'comments', CommentViewset, basename='comments')
-## generates:
+# generates:
 # /projects/{project_pk}/users/{user_pk}/comments/
 # /projects/{project_pk}/users/{user_pk}/comments/{pk}/
 
@@ -46,18 +44,3 @@ urlpatterns = [
     path(r'api/', include(comment_router.urls)),
 
 ]
-
-"""
-    path('api/projects/', ProjectViewset.as_view(), name='project_cl'),
-    path('api/projects/<int:pk>/', ProjectDetailViewset.as_view(), name='project_rud'),
-    path('api/projects/<int:project_id>/users/', ContributorViewset.as_view(), name='contrib_cl'),
-    path('api/projects/<int:project_id>/users/<int:pk>/',
-        ContributorDetailViewset.as_view(), name='contrib_rud'),
-    path('api/projects/<int:project_id>/issues/', IssueViewset.as_view(), name='issue_cl'),
-    path('api/projects/<int:project_id>/issues/<int:pk>/',
-        IssueDetailViewset.as_view(), name='issue_rud'),
-    path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/',
-        CommentViewset.as_view(), name='comment_cl'),
-    path('api/projects/<int:project_id>/issues/<int:issue_id>/comments/<int:pk>/',
-        CommentDetailViewset.as_view(), name='comment_rud'),
-"""
